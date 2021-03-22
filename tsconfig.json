@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    // "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "target": "es2017",
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "baseUrl": "./",
+    "outDir": "./dist",
+    "incremental": true
+  },
+  "include": ["src/**/*", "env/**/*", "env/.*.ts", "env/certs/*.*"],
+  "exclude": ["node_modules", "dist"]
+}

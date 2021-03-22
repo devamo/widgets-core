@@ -1,0 +1,63 @@
+{
+  "name": "widgets-core",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "serve": "NODE_ENV=development vue-cli-service serve --mode development",
+    "build": "rimraf ./build && NODE_ENV=production vue-cli-service build",
+    "lint": "vue-cli-service lint"
+  },
+  "repository": {
+    "url": "git@git.devio.pro:amodev/widgets-core.git"
+  },
+  "main": "./dist/index.js",
+  "bin": "./bin.js",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "core-js": "^3.9.0",
+    "jsonwebtoken": "^8.5.1",
+    "moment": "^2.29.1",
+    "qs": "^6.9.6",
+    "uuid": "^8.3.2",
+    "vue": "^3.0.2",
+    "vue-router": "^4.0.0-rc.2"
+  },
+  "devDependencies": {
+    "@types/axios": "^0.14.0",
+    "@types/jsonwebtoken": "^8.5.0",
+    "@types/moment": "^2.13.0",
+    "@types/vue": "^2.0.0",
+    "@typescript-eslint/eslint-plugin": "^4.15.1",
+    "@typescript-eslint/parser": "^4.15.1",
+    "@vue/cli": "^4.5.11",
+    "@vue/cli-plugin-babel": "^4.5.11",
+    "@vue/cli-plugin-eslint": "^4.5.11",
+    "@vue/cli-plugin-typescript": "^4.5.11",
+    "@vue/cli-service": "^4.5.11",
+    "@vue/eslint-config-prettier": "^6.0.0",
+    "@vue/eslint-config-standard": "^6.0.0",
+    "@vue/eslint-config-typescript": "^7.0.0",
+    "babel-cli": "^6.26.0",
+    "babel-eslint": "^10.1.0",
+    "babel-plugin-import": "^1.13.3",
+    "babel-plugin-lodash": "^3.3.4",
+    "eslint": "^7.20.0",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^3.3.1",
+    "eslint-plugin-promise": "^4.3.1",
+    "eslint-plugin-standard": "^4.1.0",
+    "eslint-plugin-vue": "^7.6.0",
+    "less": "^3.12.2",
+    "less-loader": "^7.0.2",
+    "prettier": "^2.2.1",
+    "sass": "^1.29.0",
+    "sass-loader": "^10.0.5",
+    "stylelint": "^13.11.0",
+    "stylelint-order": "^4.1.0",
+    "terser": "^5.6.0",
+    "ts-node": "^9.1.1",
+    "typescript": "~4.1.5",
+    "vue-template-compiler": "^2.6.12"
+  }
+}
