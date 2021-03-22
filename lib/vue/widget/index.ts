@@ -37,7 +37,10 @@ export class VueWidget implements types.WidgetClassInstance {
     this.api = this.createAxios(opts.apiBaseUrl)
   }
 
-  createAxios(config: string | AxiosRequestConfig, opts: { auth?: boolean; authHeader?: string; authTokenType?: string } = {}): SuperAxios {
+  createAxios(
+    config: string | AxiosRequestConfig,
+    opts: { auth?: boolean; authHeader?: string; authTokenType?: string } = {}
+  ): SuperAxios {
     opts = Object.assign(
       {
         auth: true,
@@ -81,13 +84,16 @@ export class VueWidget implements types.WidgetClassInstance {
 
             // пытаемся запросить disposable
             try {
-              const response = await fetch(`/ajax/v2/integrations/${this.amoWidget?.params.oauth_client_uuid}/disposable_token`, {
-                method: 'GET',
-                credentials: 'include',
-                headers: {
-                  'X-Requested-With': 'XMLHttpRequest'
+              const response = await fetch(
+                `/ajax/v2/integrations/${this.amoWidget?.params.oauth_client_uuid}/disposable_token`,
+                {
+                  method: 'GET',
+                  credentials: 'include',
+                  headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                  }
                 }
-              })
+              )
               const { token } = await response.json()
 
               if (!token) {
@@ -125,7 +131,10 @@ export class VueWidget implements types.WidgetClassInstance {
     return {
       init: () => true,
       render: function () {
-        const isAdvanced = window.location.pathname.indexOf('/settings/widgets/' + that.amoWidget?.params.widget_code + '/') === 0
+        const isAdvanced =
+          window.location.pathname.indexOf(
+            '/settings/widgets/' + that.amoWidget?.params.widget_code + '/'
+          ) === 0
 
         if (isAdvanced) {
           if (!that.window.AMOCRM.first_load) {
@@ -156,12 +165,32 @@ export class VueWidget implements types.WidgetClassInstance {
         return true
       },
       settings(modal: any) {
+        try {
+          const settingsWrap = modal[0].querySelector('#widget_settings__fields_wrapper')
+          if (settingsWrap) {
+            settingsWrap.style.display = 'none'
+          }
+
+          const settingDescr = modal[0].querySelector('.widget_settings_block__descr')
+          if (settingDescr) {
+            settingDescr.style.display = 'none'
+          }
+
+          const settingDescrExp = modal[0].querySelector('.widget-settings-block__desc-expander')
+          if (settingDescrExp) {
+            settingDescrExp.style.display = 'none'
+          }
+        } catch (e) {}
+
         that.settings(modal)
 
         return true
       },
       initMenuPage() {
-        const isOurWidgetPage = window.location.pathname.indexOf(`widget_page/${that.amoWidget?.params.widget_code}/main/list`) === 1
+        const isOurWidgetPage =
+          window.location.pathname.indexOf(
+            `widget_page/${that.amoWidget?.params.widget_code}/main/list`
+          ) === 1
         if (!isOurWidgetPage) return
 
         that.initMenuPage()
