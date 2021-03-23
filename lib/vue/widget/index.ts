@@ -130,6 +130,10 @@ export class VueWidget implements types.WidgetClassInstance {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const that = this
 
+    const errLog = (action: string, e: any) => {
+      return `[${this.productId}] Ошибка при выполнении render: ${e.message}`
+    }
+
     return {
       init: () => true,
       render: function () {
@@ -140,29 +144,65 @@ export class VueWidget implements types.WidgetClassInstance {
 
         if (isAdvanced) {
           if (!that.window.AMOCRM.first_load) {
-            that.init('advanced').then(() => that.render('advanced'))
+            that
+              .init('advanced')
+              .then(() => {
+                try {
+                  that.render('advanced').catch((e) => errLog('advanced', e))
+                } catch (e) {
+                  errLog('advanced', e)
+                }
+              })
+              .catch((e) => errLog('init', e))
           }
         } else {
           const page = that.getAmoPage()
-          that.init(page).then(() => that.render(page))
+
+          that
+            .init(page)
+            .then(() => {
+              try {
+                that.render(page).catch((e) => errLog('render', e))
+              } catch (e) {
+                errLog('render', e)
+              }
+            })
+            .catch((e) => errLog('init', e))
         }
 
         return true
       },
       advancedSettings: function () {
         if (that.window.AMOCRM.first_load) {
-          that.init('advanced').then(() => that.render('advanced'))
+          that
+            .init('advanced')
+            .then(() => {
+              try {
+                that.render('advanced').catch((e) => errLog('render', e))
+              } catch (e) {
+                errLog('render', e)
+              }
+            })
+            .catch((e) => errLog('init', e))
         }
 
         return true
       },
       bind_actions: function () {
-        that.bindActions()
+        try {
+          that.bindActions()
+        } catch (e) {
+          errLog('bind_actions', e)
+        }
 
         return true
       },
       onSave: function () {
-        that.onSave()
+        try {
+          that.onSave()
+        } catch (e) {
+          errLog('onSave', e)
+        }
 
         return true
       },
@@ -184,7 +224,11 @@ export class VueWidget implements types.WidgetClassInstance {
           }
         } catch (e) {}
 
-        that.settings(modal)
+        try {
+          that.settings(modal)
+        } catch (e) {
+          errLog('settings', e)
+        }
 
         return true
       },
@@ -195,14 +239,58 @@ export class VueWidget implements types.WidgetClassInstance {
           ) === 1
         if (!isOurWidgetPage) return
 
-        that.initMenuPage()
+        try {
+          that.initMenuPage()
+        } catch (e) {
+          errLog('initMenuPage', e)
+        }
 
         return true
       },
-      loadPreloadedData: async () => [],
-      loadElements: async () => [],
-      linkCard: async () => true,
-      searchDataInCard: async () => []
+      async loadPreloadedData() {
+        let data = []
+
+        try {
+          data = await that.loadPreloadedData()
+        } catch (e) {
+          errLog('loadPreloadedData', e)
+        }
+
+        return data
+      },
+      async loadElements() {
+        let data = []
+
+        try {
+          data = await that.loadElements()
+        } catch (e) {
+          errLog('loadElements', e)
+        }
+
+        return data
+      },
+      async searchDataInCard() {
+        let data = []
+
+        try {
+          data = await that.searchDataInCard()
+        } catch (e) {
+          errLog('searchDataInCard', e)
+        }
+
+        return data
+      },
+      async linkCard() {
+        let ret = true
+
+        try {
+          ret = await that.linkCard()
+        } catch (e) {
+          errLog('linkCard', e)
+        }
+
+        return ret
+      }
     }
   }
 
@@ -232,5 +320,22 @@ export class VueWidget implements types.WidgetClassInstance {
 
   async initMenuPage(): Promise<any> {
     console.log('Method "initMenuPage" not implemented')
+  }
+
+  async loadPreloadedData(): Promise<any> {
+    console.log('Method "loadPreloadedData" not implemented')
+  }
+
+  async loadElements(): Promise<any> {
+    console.log('Method "loadPreloadedData" not implemented')
+  }
+
+  async searchDataInCard(): Promise<any> {
+    console.log('Method "searchDataInCard" not implemented')
+  }
+
+  async linkCard(): Promise<boolean> {
+    console.log('Method "linkCard" not implemented')
+    return true
   }
 }

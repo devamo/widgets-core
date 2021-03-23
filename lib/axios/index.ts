@@ -5,8 +5,16 @@ export type SuperAxios = PatchedAxios
 export type PatchedAxios = {
   request<T = any, R = AxiosResponse<T>>(config: AxiosRequestConfig): Promise<R>
   get<T = any, R = AxiosResponse<T>>(url: string, config?: AxiosRequestConfig): Promise<R>
-  post<T = any, R = AxiosResponse<T>>(url: string, data?: any, config?: AxiosRequestConfig): Promise<R>
-  patch<T = any, R = AxiosResponse<T>>(url: string, data?: any, config?: AxiosRequestConfig): Promise<R>
+  post<T = any, R = AxiosResponse<T>>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<R>
+  patch<T = any, R = AxiosResponse<T>>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<R>
   delete<T = any, R = AxiosResponse<T>>(url: string, config?: AxiosRequestConfig): Promise<R>
 }
 
@@ -14,7 +22,6 @@ export const createAxios = (opts: {
   props: string | AxiosRequestConfig
   interceptor?: (config: any) => any
   beforeRequest?: () => Promise<{ token: string; error?: string }>
-  prefix?: string
 }): SuperAxios => {
   if (typeof opts.props === 'string') {
     opts.props = {
@@ -43,7 +50,7 @@ export const createAxios = (opts: {
       try {
         await opts.beforeRequest()
       } catch (e) {
-        console.log('Ошибка при пред-запросе', e)
+        console.log('Ошибка в axios:beforeRequest', e)
       }
     }
 
