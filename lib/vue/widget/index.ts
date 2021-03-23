@@ -12,6 +12,7 @@ export class VueWidget implements types.WidgetClassInstance {
   public alias = ''
   public productId = ''
   public amoWidget: AmoWidget | null
+  public extra: any
 
   public proxy: SuperAxios
   public api: SuperAxios
@@ -24,6 +25,7 @@ export class VueWidget implements types.WidgetClassInstance {
     this.alias = opts.alias || 'devio'
     this.productId = opts.productId || ''
     this.amoWidget = opts.amoWidget || null
+    this.extra = opts.extra || {}
 
     if (this.amoWidget) {
       Object.assign(this.amoWidget, { callbacks: this.callbacks() })

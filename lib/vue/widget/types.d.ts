@@ -15,6 +15,8 @@ export type WidgetClassOptions = {
   source?: 'public' | 'hub'
   proxyBaseUrl?: string
   apiBaseUrl?: string
+
+  extra?: any
 }
 
 export interface WidgetClassInstance {
