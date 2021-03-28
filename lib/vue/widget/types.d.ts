@@ -1,4 +1,4 @@
-import { SuperAxios } from '../../../lib/axios'
+import { SuperAxios } from '../../axios'
 
 export type AmoWidgetParams = {
   id?: number
@@ -61,6 +61,31 @@ export interface WidgetClassInstance {
   readonly proxy: SuperAxios
   readonly api: SuperAxios
 
+  amoWidget: AmoWidget | null
+  alias: string
+  productId: string
+  extra: any
+  window: any
+
+  hubTabs(): Promise<{ strategy: HubTabsStrategy; tabs?: HubTab[] } | undefined>
+  hubAccessRules(): Promise<HubAccessRule[] | undefined>
+
   init(page: AmoPage): Promise<void>
   render(page: AmoPage): Promise<void>
+}
+
+export enum HubTabsStrategy {
+  REPLACE = 'replace',
+  ADD = 'add'
+}
+
+export type HubAccessRule = {
+  title: string
+  alias: string
+}
+
+export type HubTab = {
+  title: string
+  alias: string
+  callback: (el: HTMLElement, tab: HubTab, widget: WidgetClassInstance) => Promise<any>
 }

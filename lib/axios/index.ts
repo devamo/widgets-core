@@ -5,16 +5,8 @@ export type SuperAxios = PatchedAxios
 export type PatchedAxios = {
   request<T = any, R = AxiosResponse<T>>(config: AxiosRequestConfig): Promise<R>
   get<T = any, R = AxiosResponse<T>>(url: string, config?: AxiosRequestConfig): Promise<R>
-  post<T = any, R = AxiosResponse<T>>(
-    url: string,
-    data?: any,
-    config?: AxiosRequestConfig
-  ): Promise<R>
-  patch<T = any, R = AxiosResponse<T>>(
-    url: string,
-    data?: any,
-    config?: AxiosRequestConfig
-  ): Promise<R>
+  post<T = any, R = AxiosResponse<T>>(url: string, data?: any, config?: AxiosRequestConfig): Promise<R>
+  patch<T = any, R = AxiosResponse<T>>(url: string, data?: any, config?: AxiosRequestConfig): Promise<R>
   delete<T = any, R = AxiosResponse<T>>(url: string, config?: AxiosRequestConfig): Promise<R>
 }
 

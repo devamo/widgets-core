@@ -1,12 +1,20 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { AxiosRequestConfig } from 'axios'
 import { decode } from 'jsonwebtoken'
-import { createAxios, SuperAxios } from '../../../lib/axios'
+import { createAxios, SuperAxios } from '../../axios'
 import types from './types'
 
 export type AmoWidget = types.AmoWidget
 export type AmoPage = types.AmoPage
 export type VueWidgetOptions = types.WidgetClassOptions
+export type WidgetClassInstance = types.WidgetClassInstance
+
+export type HubAccessRule = types.HubAccessRule
+export type HubTab = types.HubTab
+export enum HubTabsStrategy {
+  REPLACE = 'replace',
+  ADD = 'add'
+}
 
 export class VueWidget implements types.WidgetClassInstance {
   public alias = ''
@@ -39,10 +47,7 @@ export class VueWidget implements types.WidgetClassInstance {
     this.api = this.createAxios(opts.apiBaseUrl)
   }
 
-  createAxios(
-    config: string | AxiosRequestConfig,
-    opts: { auth?: boolean; authHeader?: string; authTokenType?: string } = {}
-  ): SuperAxios {
+  createAxios(config: string | AxiosRequestConfig, opts: { auth?: boolean; authHeader?: string; authTokenType?: string } = {}): SuperAxios {
     opts = Object.assign(
       {
         auth: true,
@@ -86,16 +91,13 @@ export class VueWidget implements types.WidgetClassInstance {
 
             // пытаемся запросить disposable
             try {
-              const response = await fetch(
-                `/ajax/v2/integrations/${this.amoWidget?.params.oauth_client_uuid}/disposable_token`,
-                {
-                  method: 'GET',
-                  credentials: 'include',
-                  headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                  }
+              const response = await fetch(`/ajax/v2/integrations/${this.amoWidget?.params.oauth_client_uuid}/disposable_token`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                  'X-Requested-With': 'XMLHttpRequest'
                 }
-              )
+              })
               const { token } = await response.json()
 
               if (!token) {
@@ -131,16 +133,13 @@ export class VueWidget implements types.WidgetClassInstance {
     const that = this
 
     const errLog = (action: string, e: any) => {
-      return `[${this.productId}] Ошибка при выполнении render: ${e.message}`
+      return `[${this.productId}] Ошибка при выполнении ${action}: ${e.message}`
     }
 
     return {
       init: () => true,
       render: function () {
-        const isAdvanced =
-          window.location.pathname.indexOf(
-            '/settings/widgets/' + that.amoWidget?.params.widget_code + '/'
-          ) === 0
+        const isAdvanced = window.location.pathname.indexOf('/settings/widgets/' + that.amoWidget?.params.widget_code + '/') === 0
 
         if (isAdvanced) {
           if (!that.window.AMOCRM.first_load) {
@@ -148,12 +147,12 @@ export class VueWidget implements types.WidgetClassInstance {
               .init('advanced')
               .then(() => {
                 try {
-                  that.render('advanced').catch((e) => errLog('advanced', e))
+                  that.render('advanced').catch(e => errLog('advanced', e))
                 } catch (e) {
                   errLog('advanced', e)
                 }
               })
-              .catch((e) => errLog('init', e))
+              .catch(e => errLog('init', e))
           }
         } else {
           const page = that.getAmoPage()
@@ -162,12 +161,12 @@ export class VueWidget implements types.WidgetClassInstance {
             .init(page)
             .then(() => {
               try {
-                that.render(page).catch((e) => errLog('render', e))
+                that.render(page).catch(e => errLog('render', e))
               } catch (e) {
                 errLog('render', e)
               }
             })
-            .catch((e) => errLog('init', e))
+            .catch(e => errLog('init', e))
         }
 
         return true
@@ -178,12 +177,12 @@ export class VueWidget implements types.WidgetClassInstance {
             .init('advanced')
             .then(() => {
               try {
-                that.render('advanced').catch((e) => errLog('render', e))
+                that.render('advanced').catch(e => errLog('render', e))
               } catch (e) {
                 errLog('render', e)
               }
             })
-            .catch((e) => errLog('init', e))
+            .catch(e => errLog('init', e))
         }
 
         return true
@@ -233,10 +232,7 @@ export class VueWidget implements types.WidgetClassInstance {
         return true
       },
       initMenuPage() {
-        const isOurWidgetPage =
-          window.location.pathname.indexOf(
-            `widget_page/${that.amoWidget?.params.widget_code}/main/list`
-          ) === 1
+        const isOurWidgetPage = window.location.pathname.indexOf(`widget_page/${that.amoWidget?.params.widget_code}/main/list`) === 1
         if (!isOurWidgetPage) return
 
         try {
@@ -298,6 +294,15 @@ export class VueWidget implements types.WidgetClassInstance {
     return ''
   }
 
+  async hubAccessRules(): Promise<HubAccessRule[]> {
+    return []
+  }
+
+  async hubTabs(): Promise<{ strategy: HubTabsStrategy; tabs?: HubTab[] } | undefined> {
+    return undefined
+  }
+
+  /* amo methods */
   async init(page: AmoPage): Promise<void> {
     console.log('Method "init" not implemented')
   }
