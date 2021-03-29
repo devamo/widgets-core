@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { AxiosRequestConfig } from 'axios'
+import axios, { AxiosRequestConfig, AxiosResponse } from 'axios'
 import { decode } from 'jsonwebtoken'
 import { createAxios, SuperAxios } from '../../axios'
 import types from './types'
 
 export type AmoWidget = types.AmoWidget
-export type AmoPage = types.AmoPage
 export type VueWidgetOptions = types.WidgetClassOptions
 export type WidgetClassInstance = types.WidgetClassInstance
 
@@ -16,35 +15,38 @@ export enum HubTabsStrategy {
   ADD = 'add'
 }
 
-export class VueWidget implements types.WidgetClassInstance {
+export class VueWidget implements WidgetClassInstance {
+  public source = ''
   public alias = ''
   public productId = ''
-  public amoWidget: AmoWidget | null
   public extra: any
 
-  public proxy: SuperAxios
+  public amoWidget: AmoWidget | null
+  public hub?: WidgetClassInstance
+
   public api: SuperAxios
 
   public window = window as any
+
+  private apiBaseUrl: string
+  private proxyBaseUrl: string
   private disposableToken: string | null = null
   private disposableDecoded: any | null = null
 
   constructor(opts: VueWidgetOptions) {
+    this.source = opts.source || 'public'
     this.alias = opts.alias || 'devio'
     this.productId = opts.productId || ''
     this.amoWidget = opts.amoWidget || null
     this.extra = opts.extra || {}
+    this.proxyBaseUrl = opts.proxyBaseUrl || 'https://proxy.amodev.ru'
+    this.apiBaseUrl = opts.apiBaseUrl || 'https://api.amodev.ru'
 
     if (this.amoWidget) {
       Object.assign(this.amoWidget, { callbacks: this.callbacks() })
     }
 
-    opts.source = opts.source || 'public'
-    opts.proxyBaseUrl = opts.proxyBaseUrl || 'https://proxy.amodev.ru'
-    opts.apiBaseUrl = opts.apiBaseUrl || 'https://api.amodev.ru'
-
-    this.proxy = this.createAxios(opts.proxyBaseUrl)
-    this.api = this.createAxios(opts.apiBaseUrl)
+    this.api = this.createAxios(this.apiBaseUrl)
   }
 
   createAxios(config: string | AxiosRequestConfig, opts: { auth?: boolean; authHeader?: string; authTokenType?: string } = {}): SuperAxios {
@@ -144,10 +146,10 @@ export class VueWidget implements types.WidgetClassInstance {
         if (isAdvanced) {
           if (!that.window.AMOCRM.first_load) {
             that
-              .init('advanced')
+              .init()
               .then(() => {
                 try {
-                  that.render('advanced').catch(e => errLog('advanced', e))
+                  that.render().catch(e => errLog('advanced', e))
                 } catch (e) {
                   errLog('advanced', e)
                 }
@@ -155,13 +157,11 @@ export class VueWidget implements types.WidgetClassInstance {
               .catch(e => errLog('init', e))
           }
         } else {
-          const page = that.getAmoPage()
-
           that
-            .init(page)
+            .init()
             .then(() => {
               try {
-                that.render(page).catch(e => errLog('render', e))
+                that.render().catch(e => errLog('render', e))
               } catch (e) {
                 errLog('render', e)
               }
@@ -174,10 +174,10 @@ export class VueWidget implements types.WidgetClassInstance {
       advancedSettings: function () {
         if (that.window.AMOCRM.first_load) {
           that
-            .init('advanced')
+            .init()
             .then(() => {
               try {
-                that.render('advanced').catch(e => errLog('render', e))
+                that.render().catch(e => errLog('render', e))
               } catch (e) {
                 errLog('render', e)
               }
@@ -221,7 +221,9 @@ export class VueWidget implements types.WidgetClassInstance {
           if (settingDescrExp) {
             settingDescrExp.style.display = 'none'
           }
-        } catch (e) {}
+        } catch (e) {
+          console.error(e)
+        }
 
         try {
           that.settings(modal)
@@ -233,15 +235,18 @@ export class VueWidget implements types.WidgetClassInstance {
       },
       initMenuPage() {
         const isOurWidgetPage = window.location.pathname.indexOf(`widget_page/${that.amoWidget?.params.widget_code}/main/list`) === 1
-        if (!isOurWidgetPage) return
 
-        try {
-          that.initMenuPage()
-        } catch (e) {
-          errLog('initMenuPage', e)
+        if (!isOurWidgetPage) {
+          return true
+        } else {
+          try {
+            that.initMenuPage()
+          } catch (e) {
+            errLog('initMenuPage', e)
+          }
+
+          return true
         }
-
-        return true
       },
       async loadPreloadedData() {
         let data = []
@@ -290,8 +295,8 @@ export class VueWidget implements types.WidgetClassInstance {
     }
   }
 
-  private getAmoPage(): AmoPage {
-    return ''
+  async proxy<T>(props: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    return axios.post<T>(this.proxyBaseUrl, props)
   }
 
   async hubAccessRules(): Promise<HubAccessRule[]> {
@@ -303,11 +308,11 @@ export class VueWidget implements types.WidgetClassInstance {
   }
 
   /* amo methods */
-  async init(page: AmoPage): Promise<void> {
+  async init(): Promise<void> {
     console.log('Method "init" not implemented')
   }
 
-  async render(page: AmoPage): Promise<void> {
+  async render(): Promise<void> {
     console.log('Method "render" not implemented')
   }
 

@@ -1,8 +1,6 @@
 import Axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 
-export type SuperAxios = PatchedAxios
-
-export type PatchedAxios = {
+export type SuperAxios = {
   request<T = any, R = AxiosResponse<T>>(config: AxiosRequestConfig): Promise<R>
   get<T = any, R = AxiosResponse<T>>(url: string, config?: AxiosRequestConfig): Promise<R>
   post<T = any, R = AxiosResponse<T>>(url: string, data?: any, config?: AxiosRequestConfig): Promise<R>

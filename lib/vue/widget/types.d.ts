@@ -1,3 +1,4 @@
+import { AxiosRequestConfig, AxiosResponse } from 'axios'
 import { SuperAxios } from '../../axios'
 
 export type AmoWidgetParams = {
@@ -43,8 +44,6 @@ export type AmoWidget = {
   }
 }
 
-export type AmoPage = 'advanced' | ''
-
 export type WidgetClassOptions = {
   alias: string
   productId?: string
@@ -58,20 +57,22 @@ export type WidgetClassOptions = {
 }
 
 export interface WidgetClassInstance {
-  readonly proxy: SuperAxios
   readonly api: SuperAxios
 
-  amoWidget: AmoWidget | null
   alias: string
   productId: string
   extra: any
   window: any
 
+  amoWidget: AmoWidget | null
+  hub?: WidgetClassInstance
+
+  proxy<T>(opts: AxiosRequestConfig): Promise<AxiosResponse<T>>
   hubTabs(): Promise<{ strategy: HubTabsStrategy; tabs?: HubTab[] } | undefined>
   hubAccessRules(): Promise<HubAccessRule[] | undefined>
 
-  init(page: AmoPage): Promise<void>
-  render(page: AmoPage): Promise<void>
+  init(): Promise<void>
+  render(): Promise<void>
 }
 
 export enum HubTabsStrategy {
