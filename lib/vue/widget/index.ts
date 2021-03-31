@@ -76,7 +76,7 @@ export class VueWidget implements WidgetClassInstance {
 
     if (props.needAuth) {
       props.tokenRequest = async () => {
-        return this.getDisposable(this.source === 'hub' ? 'devio-hub' : this.alias)
+        return this.getDisposable()
       }
     }
 
@@ -108,27 +108,37 @@ export class VueWidget implements WidgetClassInstance {
       }
 
       props.beforeRequest = async () => {
-        await this.getDisposable(this.source === 'hub' ? 'devio-hub' : this.alias)
+        await this.getDisposable()
       }
     }
 
     return createAxios(props)
   }
 
-  async getDisposable(alias: string): Promise<string | null> {
+  async getDisposable(): Promise<string | null> {
     try {
+      // const alias = this.source === 'hub' ? 'devio-hub' : this.alias
+      const alias = this.alias
+      const lsAlias = `${alias}-disposableToken`
+
+      let productId: string | null = null
+
       let jwtExpired = false
       let jwtNotExists = true
 
       // если есть в localStorage но нет у нас
-      if (localStorage[`${alias}-disposableToken`] && !this.disposableToken) {
-        this.disposableToken = localStorage[`${alias}-disposableToken`]
+      if (localStorage[lsAlias] && !this.disposableToken) {
+        const [existToken, existTokenProductId] = localStorage[lsAlias].split(':')
+
+        if (existTokenProductId) {
+          productId = existTokenProductId
+        }
+
+        this.disposableToken = existToken
         this.disposableDecoded = decode(this.disposableToken as string)
       }
 
       if (this.disposableDecoded) {
-        // console.log('Текущий disposable', this.disposableDecoded)
-
         jwtNotExists = false
         jwtExpired = Date.now() - 1000 * 10 >= +this.disposableDecoded.exp * 1000
       }
@@ -154,7 +164,7 @@ export class VueWidget implements WidgetClassInstance {
             throw new Error('Не удалось получить токен')
           }
 
-          localStorage[`${alias}-disposableToken`] = token
+          localStorage[lsAlias] = token + (productId ? `:${productId}` : '')
           this.disposableToken = token
           this.disposableDecoded = decode(token)
         } catch (e) {
