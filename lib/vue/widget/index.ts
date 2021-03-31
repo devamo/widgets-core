@@ -2,6 +2,7 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios'
 import { decode } from 'jsonwebtoken'
 import { createAxios, SuperAxios } from '../../axios'
+import { WebSockets, WebSocketsOptions } from '../../sockets'
 import types from './types'
 
 export type AmoWidget = types.AmoWidget
@@ -30,6 +31,7 @@ export class VueWidget implements WidgetClassInstance {
 
   private apiBaseUrl: string
   private proxyBaseUrl: string
+  private wsBaseUrl: string
   private disposableToken: string | null = null
   private disposableDecoded: any | null = null
 
@@ -41,12 +43,36 @@ export class VueWidget implements WidgetClassInstance {
     this.extra = opts.extra || {}
     this.proxyBaseUrl = opts.proxyBaseUrl || 'https://proxy.amodev.ru'
     this.apiBaseUrl = opts.apiBaseUrl || 'https://api.amodev.ru'
+    this.wsBaseUrl = opts.wsBaseUrl || 'wss://wss.amodev.ru'
 
     if (this.amoWidget) {
       Object.assign(this.amoWidget, { callbacks: this.callbacks() })
     }
 
     this.api = this.createAxios(this.apiBaseUrl)
+  }
+
+  createSockets(opts?: Partial<WebSocketsOptions>) {
+    opts = opts || {}
+
+    const wsUrl = opts.wsUrl || this.wsBaseUrl
+
+    const props: WebSocketsOptions = {
+      wsUrl,
+      needAuth: opts.needAuth || false,
+      actions: opts.actions || {},
+      autoConnect: opts.autoConnect || false,
+
+      axios: this.createAxios(wsUrl.replace('ws://', 'http://').replace('wss://', 'https://'))
+    }
+
+    if (props.needAuth) {
+      props.tokenRequest = async () => {
+        return this.getDisposable()
+      }
+    }
+
+    return new WebSockets(props)
   }
 
   createAxios(config: string | AxiosRequestConfig, opts: { auth?: boolean; authHeader?: string; authTokenType?: string } = {}): SuperAxios {
@@ -71,63 +97,69 @@ export class VueWidget implements WidgetClassInstance {
       }
 
       props.beforeRequest = async () => {
+        await this.getDisposable()
+      }
+    }
+
+    return createAxios(props)
+  }
+
+  async getDisposable(): Promise<string | null> {
+    try {
+      let jwtExpired = false
+      let jwtNotExists = true
+
+      // если есть в localStorage но нет у нас
+      if (localStorage[`${this.alias}-disposableToken`] && !this.disposableToken) {
+        this.disposableToken = localStorage[`${this.alias}-disposableToken`]
+        this.disposableDecoded = decode(this.disposableToken as string)
+      }
+
+      if (this.disposableDecoded) {
+        // console.log('Текущий disposable', this.disposableDecoded)
+
+        jwtNotExists = false
+        jwtExpired = Date.now() - 1000 * 10 >= +this.disposableDecoded.exp * 1000
+      }
+
+      if (jwtNotExists || jwtExpired) {
+        // console.log(`jwt ${jwtNotExists ? 'not exists' : 'expired'}, refreshing...`)
+
+        // пытаемся запросить disposable
         try {
-          let jwtExpired = false
-          let jwtNotExists = true
-
-          // если есть в localStorage но нет у нас
-          if (localStorage[`${this.alias}-disposableToken`] && !this.disposableToken) {
-            this.disposableToken = localStorage[`${this.alias}-disposableToken`]
-            this.disposableDecoded = decode(this.disposableToken as string)
-          }
-
-          if (this.disposableDecoded) {
-            console.log('Текущий disposable', this.disposableDecoded)
-
-            jwtNotExists = false
-            jwtExpired = Date.now() - 1000 * 10 >= +this.disposableDecoded.exp * 1000
-          }
-
-          if (jwtNotExists || jwtExpired) {
-            console.log(`jwt ${jwtNotExists ? 'not exists' : 'expired'}, refreshing...`)
-
-            // пытаемся запросить disposable
-            try {
-              const response = await fetch(`/ajax/v2/integrations/${this.amoWidget?.params.oauth_client_uuid}/disposable_token`, {
-                method: 'GET',
-                credentials: 'include',
-                headers: {
-                  'X-Requested-With': 'XMLHttpRequest'
-                }
-              })
-              const { token } = await response.json()
-
-              if (!token) {
-                throw new Error('Не удалось получить токен')
-              }
-
-              localStorage[`${this.alias}-disposableToken`] = token
-              this.disposableToken = token
-              this.disposableDecoded = decode(token)
-            } catch (e) {
-              console.error(`error while refreshing token: ${e.message}`)
-              console.log(e)
-
-              this.disposableToken = null
-              this.disposableDecoded = null
+          const response = await fetch(`/ajax/v2/integrations/${this.amoWidget?.params.oauth_client_uuid}/disposable_token`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest'
             }
+          })
+          const { token } = await response.json()
+
+          if (!token) {
+            throw new Error('Не удалось получить токен')
           }
+
+          localStorage[`${this.alias}-disposableToken`] = token
+          this.disposableToken = token
+          this.disposableDecoded = decode(token)
         } catch (e) {
-          console.error(`error on beforeRequest: ${e.message}`)
+          console.error(`error while refreshing token: ${e.message}`)
           console.log(e)
 
           this.disposableToken = null
           this.disposableDecoded = null
         }
       }
+    } catch (e) {
+      console.error(`error on beforeRequest: ${e.message}`)
+      console.log(e)
+
+      this.disposableToken = null
+      this.disposableDecoded = null
     }
 
-    return createAxios(props)
+    return this.disposableToken
   }
 
   callbacks(): any {
