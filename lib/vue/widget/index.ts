@@ -117,25 +117,17 @@ export class VueWidget implements WidgetClassInstance {
 
   async getDisposable(): Promise<string | null> {
     try {
-      // const alias = this.source === 'hub' ? 'devio-hub' : this.alias
-      const alias = this.alias
+      const alias = this.source === 'hub' ? 'devio-hub' : this.alias
       const lsAlias = `${alias}-disposableToken`
-
-      let productId: string | null = null
+      const productId = this.source === 'hub' ? this.productId : null
 
       let jwtExpired = false
       let jwtNotExists = true
 
       // если есть в localStorage но нет у нас
       if (localStorage[lsAlias] && !this.disposableToken) {
-        const [existToken, existTokenProductId] = localStorage[lsAlias].split(':')
-
-        if (existTokenProductId) {
-          productId = existTokenProductId
-        }
-
-        this.disposableToken = existToken
-        this.disposableDecoded = decode(this.disposableToken as string)
+        this.disposableToken = localStorage[lsAlias] + (productId ? `:${productId}` : '')
+        this.disposableDecoded = decode(localStorage[lsAlias])
       }
 
       if (this.disposableDecoded) {
@@ -164,8 +156,8 @@ export class VueWidget implements WidgetClassInstance {
             throw new Error('Не удалось получить токен')
           }
 
-          localStorage[lsAlias] = token + (productId ? `:${productId}` : '')
-          this.disposableToken = token
+          localStorage[lsAlias] = token
+          this.disposableToken = token + (productId ? `:${productId}` : '')
           this.disposableDecoded = decode(token)
         } catch (e) {
           console.error(`error while refreshing token: ${e.message}`)
