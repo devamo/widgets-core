@@ -49,6 +49,14 @@ export class VueWidget implements WidgetClassInstance {
       Object.assign(this.amoWidget, { callbacks: this.callbacks() })
     }
 
+    if (this.source === 'hub') {
+      if (!opts.hub) {
+        throw new Error('Для инициализации из хаба - hub обязателен в опциях')
+      }
+
+      this.hub = opts.hub
+    }
+
     this.api = this.createAxios(this.apiBaseUrl)
   }
 
@@ -68,14 +76,17 @@ export class VueWidget implements WidgetClassInstance {
 
     if (props.needAuth) {
       props.tokenRequest = async () => {
-        return this.getDisposable()
+        return this.getDisposable(this.source === 'hub' ? 'devio-hub' : this.alias)
       }
     }
 
     return new WebSockets(props)
   }
 
-  createAxios(config: string | AxiosRequestConfig, opts: { auth?: boolean; authHeader?: string; authTokenType?: string } = {}): SuperAxios {
+  createAxios(
+    config: string | AxiosRequestConfig,
+    opts: { auth?: boolean; authHeader?: string; authTokenType?: string } = {}
+  ): SuperAxios {
     opts = Object.assign(
       {
         auth: true,
@@ -97,21 +108,21 @@ export class VueWidget implements WidgetClassInstance {
       }
 
       props.beforeRequest = async () => {
-        await this.getDisposable()
+        await this.getDisposable(this.source === 'hub' ? 'devio-hub' : this.alias)
       }
     }
 
     return createAxios(props)
   }
 
-  async getDisposable(): Promise<string | null> {
+  async getDisposable(alias: string): Promise<string | null> {
     try {
       let jwtExpired = false
       let jwtNotExists = true
 
       // если есть в localStorage но нет у нас
-      if (localStorage[`${this.alias}-disposableToken`] && !this.disposableToken) {
-        this.disposableToken = localStorage[`${this.alias}-disposableToken`]
+      if (localStorage[`${alias}-disposableToken`] && !this.disposableToken) {
+        this.disposableToken = localStorage[`${alias}-disposableToken`]
         this.disposableDecoded = decode(this.disposableToken as string)
       }
 
@@ -127,20 +138,23 @@ export class VueWidget implements WidgetClassInstance {
 
         // пытаемся запросить disposable
         try {
-          const response = await fetch(`/ajax/v2/integrations/${this.amoWidget?.params.oauth_client_uuid}/disposable_token`, {
-            method: 'GET',
-            credentials: 'include',
-            headers: {
-              'X-Requested-With': 'XMLHttpRequest'
+          const response = await fetch(
+            `/ajax/v2/integrations/${this.amoWidget?.params.oauth_client_uuid}/disposable_token`,
+            {
+              method: 'GET',
+              credentials: 'include',
+              headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+              }
             }
-          })
+          )
           const { token } = await response.json()
 
           if (!token) {
             throw new Error('Не удалось получить токен')
           }
 
-          localStorage[`${this.alias}-disposableToken`] = token
+          localStorage[`${alias}-disposableToken`] = token
           this.disposableToken = token
           this.disposableDecoded = decode(token)
         } catch (e) {
@@ -173,7 +187,10 @@ export class VueWidget implements WidgetClassInstance {
     return {
       init: () => true,
       render: function () {
-        const isAdvanced = window.location.pathname.indexOf('/settings/widgets/' + that.amoWidget?.params.widget_code + '/') === 0
+        const isAdvanced =
+          window.location.pathname.indexOf(
+            '/settings/widgets/' + that.amoWidget?.params.widget_code + '/'
+          ) === 0
 
         if (isAdvanced) {
           if (!that.window.AMOCRM.first_load) {
@@ -181,24 +198,24 @@ export class VueWidget implements WidgetClassInstance {
               .init()
               .then(() => {
                 try {
-                  that.render().catch(e => errLog('advanced', e))
+                  that.render().catch((e) => errLog('advanced', e))
                 } catch (e) {
                   errLog('advanced', e)
                 }
               })
-              .catch(e => errLog('init', e))
+              .catch((e) => errLog('init', e))
           }
         } else {
           that
             .init()
             .then(() => {
               try {
-                that.render().catch(e => errLog('render', e))
+                that.render().catch((e) => errLog('render', e))
               } catch (e) {
                 errLog('render', e)
               }
             })
-            .catch(e => errLog('init', e))
+            .catch((e) => errLog('init', e))
         }
 
         return true
@@ -209,12 +226,12 @@ export class VueWidget implements WidgetClassInstance {
             .init()
             .then(() => {
               try {
-                that.render().catch(e => errLog('render', e))
+                that.render().catch((e) => errLog('render', e))
               } catch (e) {
                 errLog('render', e)
               }
             })
-            .catch(e => errLog('init', e))
+            .catch((e) => errLog('init', e))
         }
 
         return true
@@ -266,7 +283,10 @@ export class VueWidget implements WidgetClassInstance {
         return true
       },
       initMenuPage() {
-        const isOurWidgetPage = window.location.pathname.indexOf(`widget_page/${that.amoWidget?.params.widget_code}/main/list`) === 1
+        const isOurWidgetPage =
+          window.location.pathname.indexOf(
+            `widget_page/${that.amoWidget?.params.widget_code}/main/list`
+          ) === 1
 
         if (!isOurWidgetPage) {
           return true

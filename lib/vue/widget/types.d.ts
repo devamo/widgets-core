@@ -48,6 +48,7 @@ export type WidgetClassOptions = {
   alias: string
   productId?: string
   amoWidget?: AmoWidget
+  hub?: WidgetClassInstance
 
   source?: 'public' | 'hub'
   proxyBaseUrl?: string
