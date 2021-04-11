@@ -89,7 +89,9 @@ export class WebSockets {
     this._checkingActive = false
   }
 
-  async connect() {
+  async connect(force = false) {
+    if (this.ws && !force) return
+
     this._token = await this.getToken()
 
     const promise = new Promise((resolve, reject) => {
@@ -120,7 +122,7 @@ export class WebSockets {
           if (this.ws?.id === id || !this.ws?.id) {
             console.log(`Connection ${this.ws?.id} closed [${event.code}], retrying in 5s...`)
 
-            setTimeout(() => this.connect(), 5000)
+            setTimeout(() => this.connect(true), 5000)
           } else {
             console.log(`Connection ${this.ws?.id} closed, sockets recreated, reconnecting not needed`)
           }
