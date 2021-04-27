@@ -3,6 +3,7 @@ import axios, { AxiosRequestConfig, AxiosResponse } from 'axios'
 import { decode } from 'jsonwebtoken'
 import { createAxios, SuperAxios } from '../../axios'
 import { WebSockets, WebSocketsOptions } from '../../sockets'
+import moment from 'moment'
 import types from './types'
 
 export type AmoWidget = types.AmoWidget
@@ -132,7 +133,11 @@ export class VueWidget implements WidgetClassInstance {
 
       if (this.disposableDecoded) {
         jwtNotExists = false
-        jwtExpired = Date.now() - 1000 * 10 >= +this.disposableDecoded.exp * 1000
+
+        const expiresDiff = moment.unix(+this.disposableDecoded.exp).diff(moment(), 'seconds')
+
+        // если токен заканчивается меньше чем через 2 минуты
+        jwtExpired = expiresDiff <= 120
       }
 
       if (jwtNotExists || jwtExpired) {
