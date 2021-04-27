@@ -1,6 +1,6 @@
 {
   "name": "widgets-core",
-  "version": "1.0.10",
+  "version": "1.0.12",
   "private": true,
   "scripts": {
     "serve": "NODE_ENV=development vue-cli-service serve --mode development",

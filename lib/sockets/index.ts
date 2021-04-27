@@ -19,9 +19,7 @@ export type WebSocketsOptions = {
 export class WebSockets {
   public axios: SuperAxios
 
-  private _id = ''
   private ws: PatchedWebsocket | null = null
-  private needAuth: boolean
   private authUrl: string
   private actions: any = {}
   private tokenRequest: null | (() => any)
@@ -29,7 +27,6 @@ export class WebSockets {
   constructor(opts: WebSocketsOptions) {
     this.authUrl = opts.wsUrl || 'wss://wss.amodev.ru'
     this.actions = opts.actions || {}
-    this.needAuth = opts.needAuth || false
     this.axios = opts.axios
     this.tokenRequest = opts.tokenRequest || null
   }

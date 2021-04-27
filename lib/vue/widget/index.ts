@@ -75,7 +75,7 @@ export class VueWidget implements WidgetClassInstance {
       axios: this.createAxios(wsUrl.replace('ws://', 'http://').replace('wss://', 'https://'))
     }
 
-    if (props.needAuth) {
+    if (opts.needAuth) {
       props.tokenRequest = async () => {
         return this.getDisposable()
       }
@@ -84,10 +84,7 @@ export class VueWidget implements WidgetClassInstance {
     return new WebSockets(props)
   }
 
-  createAxios(
-    config: string | AxiosRequestConfig,
-    opts: { auth?: boolean; authHeader?: string; authTokenType?: string } = {}
-  ): SuperAxios {
+  createAxios(config: string | AxiosRequestConfig, opts: { auth?: boolean; authHeader?: string; authTokenType?: string } = {}): SuperAxios {
     opts = Object.assign(
       {
         auth: true,
@@ -137,7 +134,7 @@ export class VueWidget implements WidgetClassInstance {
         const expiresDiff = moment.unix(+this.disposableDecoded.exp).diff(moment(), 'seconds')
 
         // если токен заканчивается меньше чем через 2 минуты
-        jwtExpired = expiresDiff <= 120
+        jwtExpired = expiresDiff <= (+localStorage.devioJWTexpireBuffer || 120)
       }
 
       if (jwtNotExists || jwtExpired) {
@@ -145,16 +142,13 @@ export class VueWidget implements WidgetClassInstance {
 
         // пытаемся запросить disposable
         try {
-          const response = await fetch(
-            `/ajax/v2/integrations/${this.amoWidget?.params.oauth_client_uuid}/disposable_token`,
-            {
-              method: 'GET',
-              credentials: 'include',
-              headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-              }
+          const response = await fetch(`/ajax/v2/integrations/${this.amoWidget?.params.oauth_client_uuid}/disposable_token`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest'
             }
-          )
+          })
           const { token } = await response.json()
 
           if (!token) {
@@ -194,10 +188,7 @@ export class VueWidget implements WidgetClassInstance {
     return {
       init: () => true,
       render: function () {
-        const isAdvanced =
-          window.location.pathname.indexOf(
-            '/settings/widgets/' + that.amoWidget?.params.widget_code + '/'
-          ) === 0
+        const isAdvanced = window.location.pathname.indexOf('/settings/widgets/' + that.amoWidget?.params.widget_code + '/') === 0
 
         if (isAdvanced) {
           if (!that.window.AMOCRM.first_load) {
@@ -205,24 +196,24 @@ export class VueWidget implements WidgetClassInstance {
               .init()
               .then(() => {
                 try {
-                  that.render().catch((e) => errLog('advanced', e))
+                  that.render().catch(e => errLog('advanced', e))
                 } catch (e) {
                   errLog('advanced', e)
                 }
               })
-              .catch((e) => errLog('init', e))
+              .catch(e => errLog('init', e))
           }
         } else {
           that
             .init()
             .then(() => {
               try {
-                that.render().catch((e) => errLog('render', e))
+                that.render().catch(e => errLog('render', e))
               } catch (e) {
                 errLog('render', e)
               }
             })
-            .catch((e) => errLog('init', e))
+            .catch(e => errLog('init', e))
         }
 
         return true
@@ -233,12 +224,12 @@ export class VueWidget implements WidgetClassInstance {
             .init()
             .then(() => {
               try {
-                that.render().catch((e) => errLog('render', e))
+                that.render().catch(e => errLog('render', e))
               } catch (e) {
                 errLog('render', e)
               }
             })
-            .catch((e) => errLog('init', e))
+            .catch(e => errLog('init', e))
         }
 
         return true
@@ -290,10 +281,7 @@ export class VueWidget implements WidgetClassInstance {
         return true
       },
       initMenuPage() {
-        const isOurWidgetPage =
-          window.location.pathname.indexOf(
-            `widget_page/${that.amoWidget?.params.widget_code}/main/list`
-          ) === 1
+        const isOurWidgetPage = window.location.pathname.indexOf(`widget_page/${that.amoWidget?.params.widget_code}/main/list`) === 1
 
         if (!isOurWidgetPage) {
           return true
