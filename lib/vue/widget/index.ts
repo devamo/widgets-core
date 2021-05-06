@@ -342,6 +342,68 @@ export class VueWidget implements WidgetClassInstance {
     }
   }
 
+  can(alias: string, def = false) {
+    if (this._auth === undefined) throw new Error('Авторизация не загружена, вызовите fetchAuth')
+    if (this._access === undefined) throw new Error('Настройки доступа не загружены, вызовите fetchAccess')
+
+    const userId = this._auth.accountUser.amoId
+    const groupId = this._auth.accountUserGroup.amoId
+
+    const allowGroup = this._access[`group_${groupId}_${alias}`] !== undefined ? this._access[`group_${groupId}_${alias}`] : undefined
+    const allowUser = this._access[`user_${userId}_${alias}`] !== undefined ? this._access[`user_${userId}_${alias}`] : undefined
+
+    return allowGroup || allowUser || def
+  }
+
+  private _config: any = undefined
+  get config() {
+    return this._config
+  }
+  async fetchConfig(force = false) {
+    if (!force && this._config !== undefined) return this._config
+
+    const { data } = await this.api.get('/hub/settings')
+    this._config = data
+
+    return data
+  }
+  async saveConfig(config: any) {
+    this._config = config
+
+    await this.api.post('/hub/settings', config)
+  }
+
+  private _access: any = undefined
+  get access() {
+    return this._access
+  }
+  async fetchAccess(force = false) {
+    if (!force && this._access !== undefined) return this._access
+
+    const { data } = await this.api.get('/hub/access')
+    this._access = data
+
+    return data
+  }
+  async saveAccess(access: any) {
+    this._access = access
+
+    await this.api.post('/hub/access', access)
+  }
+
+  private _auth: any = undefined
+  get auth() {
+    return this._auth
+  }
+  async fetchAuth(force = false) {
+    if (!force && this._auth !== undefined) return this._auth
+
+    const { data } = await this.api.get('/oauth/me')
+    this._auth = data
+
+    return data
+  }
+
   async proxy<T>(props: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     return axios.post<T>(this.proxyBaseUrl, props)
   }

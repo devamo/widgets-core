@@ -1,6 +1,6 @@
 {
   "name": "widgets-core",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "private": true,
   "scripts": {
     "serve": "NODE_ENV=development vue-cli-service serve --mode development",
@@ -14,12 +14,9 @@
   "bin": "./bin.js",
   "dependencies": {
     "axios": "^0.21.1",
-    "core-js": "^3.9.1",
     "jsonwebtoken": "^8.5.1",
     "moment": "^2.29.1",
-    "qs": "^6.10.1",
-    "uuid": "^8.3.2",
-    "vue": "^3.0.2"
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@types/axios": "^0.14.0",

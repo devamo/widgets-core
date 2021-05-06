@@ -66,12 +66,26 @@ export interface WidgetClassInstance {
   extra: any
   window: any
 
+  config: any
+  access: any
+  auth: any
+
   amoWidget: AmoWidget | null
   hub?: WidgetClassInstance
 
   proxy<T>(opts: AxiosRequestConfig): Promise<AxiosResponse<T>>
   hubTabs(): Promise<{ strategy: HubTabsStrategy; tabs?: HubTab[] } | undefined>
   hubAccessRules(): Promise<HubAccessRule[] | undefined>
+
+  can(alias: string, def?: any): boolean
+
+  fetchAuth(force?: boolean): Promise<void>
+
+  fetchAccess(force?: boolean): Promise<void>
+  saveAccess(access: any): Promise<void>
+
+  fetchConfig(force?: boolean): Promise<void>
+  saveConfig(access: any): Promise<void>
 
   init(): Promise<void>
   render(): Promise<void>
