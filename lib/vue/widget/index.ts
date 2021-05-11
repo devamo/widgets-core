@@ -84,7 +84,10 @@ export class VueWidget implements WidgetClassInstance {
     return new WebSockets(props)
   }
 
-  createAxios(config: string | AxiosRequestConfig, opts: { auth?: boolean; authHeader?: string; authTokenType?: string } = {}): SuperAxios {
+  createAxios(
+    config: string | AxiosRequestConfig,
+    opts: { auth?: boolean; authHeader?: string; authTokenType?: string } = {}
+  ): SuperAxios {
     opts = Object.assign(
       {
         auth: true,
@@ -129,7 +132,7 @@ export class VueWidget implements WidgetClassInstance {
       }
 
       if (this.disposableDecoded) {
-        jwtNotExists = false
+        jwtNotExists = !(+this.window.AMOCRM.constant('user').id === this.disposableDecoded.user_id)
 
         const expiresDiff = moment.unix(+this.disposableDecoded.exp).diff(moment(), 'seconds')
 
@@ -142,13 +145,16 @@ export class VueWidget implements WidgetClassInstance {
 
         // пытаемся запросить disposable
         try {
-          const response = await fetch(`/ajax/v2/integrations/${this.amoWidget?.params.oauth_client_uuid}/disposable_token`, {
-            method: 'GET',
-            credentials: 'include',
-            headers: {
-              'X-Requested-With': 'XMLHttpRequest'
+          const response = await fetch(
+            `/ajax/v2/integrations/${this.amoWidget?.params.oauth_client_uuid}/disposable_token`,
+            {
+              method: 'GET',
+              credentials: 'include',
+              headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+              }
             }
-          })
+          )
           const { token } = await response.json()
 
           if (!token) {
@@ -188,7 +194,10 @@ export class VueWidget implements WidgetClassInstance {
     return {
       init: () => true,
       render: function () {
-        const isAdvanced = window.location.pathname.indexOf('/settings/widgets/' + that.amoWidget?.params.widget_code + '/') === 0
+        const isAdvanced =
+          window.location.pathname.indexOf(
+            '/settings/widgets/' + that.amoWidget?.params.widget_code + '/'
+          ) === 0
 
         if (isAdvanced) {
           if (!that.window.AMOCRM.first_load) {
@@ -196,24 +205,24 @@ export class VueWidget implements WidgetClassInstance {
               .init()
               .then(() => {
                 try {
-                  that.render().catch(e => errLog('advanced', e))
+                  that.render().catch((e) => errLog('advanced', e))
                 } catch (e) {
                   errLog('advanced', e)
                 }
               })
-              .catch(e => errLog('init', e))
+              .catch((e) => errLog('init', e))
           }
         } else {
           that
             .init()
             .then(() => {
               try {
-                that.render().catch(e => errLog('render', e))
+                that.render().catch((e) => errLog('render', e))
               } catch (e) {
                 errLog('render', e)
               }
             })
-            .catch(e => errLog('init', e))
+            .catch((e) => errLog('init', e))
         }
 
         return true
@@ -224,12 +233,12 @@ export class VueWidget implements WidgetClassInstance {
             .init()
             .then(() => {
               try {
-                that.render().catch(e => errLog('render', e))
+                that.render().catch((e) => errLog('render', e))
               } catch (e) {
                 errLog('render', e)
               }
             })
-            .catch(e => errLog('init', e))
+            .catch((e) => errLog('init', e))
         }
 
         return true
@@ -281,7 +290,10 @@ export class VueWidget implements WidgetClassInstance {
         return true
       },
       initMenuPage() {
-        const isOurWidgetPage = window.location.pathname.indexOf(`widget_page/${that.amoWidget?.params.widget_code}/main/list`) === 1
+        const isOurWidgetPage =
+          window.location.pathname.indexOf(
+            `widget_page/${that.amoWidget?.params.widget_code}/main/list`
+          ) === 1
 
         if (!isOurWidgetPage) {
           return true
@@ -344,13 +356,20 @@ export class VueWidget implements WidgetClassInstance {
 
   can(alias: string, def = false) {
     if (this._auth === undefined) throw new Error('Авторизация не загружена, вызовите fetchAuth')
-    if (this._access === undefined) throw new Error('Настройки доступа не загружены, вызовите fetchAccess')
+    if (this._access === undefined)
+      throw new Error('Настройки доступа не загружены, вызовите fetchAccess')
 
     const userId = this._auth.accountUser.amoId
     const groupId = this._auth.accountUserGroup.amoId
 
-    const allowGroup = this._access[`group_${groupId}_${alias}`] !== undefined ? this._access[`group_${groupId}_${alias}`] : undefined
-    const allowUser = this._access[`user_${userId}_${alias}`] !== undefined ? this._access[`user_${userId}_${alias}`] : undefined
+    const allowGroup =
+      this._access[`group_${groupId}_${alias}`] !== undefined
+        ? this._access[`group_${groupId}_${alias}`]
+        : undefined
+    const allowUser =
+      this._access[`user_${userId}_${alias}`] !== undefined
+        ? this._access[`user_${userId}_${alias}`]
+        : undefined
 
     return allowGroup || allowUser || def
   }
