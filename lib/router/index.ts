@@ -12,6 +12,7 @@ export enum AmoPage {
   TasksList,
   TasksLine,
   TasksCalendar,
+  Advanced,
   Unknown
 }
 
@@ -66,6 +67,8 @@ export function getCurrentRoute(): AmoRoute {
     return { page: AmoPage.ContactsCard }
   } else if (/companies\/add/.test(h)) {
     return { page: AmoPage.CompaniesCard }
+  } else if (/advanced/.test(h)) {
+    return { page: AmoPage.Advanced }
   }
 
   return { page: AmoPage.Unknown }
