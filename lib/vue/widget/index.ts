@@ -35,8 +35,11 @@ export class VueWidget implements WidgetClassInstance {
   private wsBaseUrl: string
   private disposableToken: string | null = null
   private disposableDecoded: any | null = null
+  private clearSettings: boolean
 
   constructor(opts: VueWidgetOptions) {
+    this.clearSettings = opts.clearSettings !== undefined ? opts.clearSettings : true
+
     this.source = opts.source || 'public'
     this.alias = opts.alias || 'devio'
     this.productId = opts.productId || ''
@@ -263,19 +266,21 @@ export class VueWidget implements WidgetClassInstance {
       },
       settings(modal: any) {
         try {
-          const settingsWrap = modal[0].querySelector('#widget_settings__fields_wrapper')
-          if (settingsWrap) {
-            settingsWrap.style.display = 'none'
-          }
+          if (that.clearSettings) {
+            const settingsWrap = modal[0].querySelector('#widget_settings__fields_wrapper')
+            if (settingsWrap) {
+              settingsWrap.style.display = 'none'
+            }
 
-          const settingDescr = modal[0].querySelector('.widget_settings_block__descr')
-          if (settingDescr) {
-            settingDescr.style.display = 'none'
-          }
+            const settingDescr = modal[0].querySelector('.widget_settings_block__descr')
+            if (settingDescr) {
+              settingDescr.style.display = 'none'
+            }
 
-          const settingDescrExp = modal[0].querySelector('.widget-settings-block__desc-expander')
-          if (settingDescrExp) {
-            settingDescrExp.style.display = 'none'
+            const settingDescrExp = modal[0].querySelector('.widget-settings-block__desc-expander')
+            if (settingDescrExp) {
+              settingDescrExp.style.display = 'none'
+            }
           }
         } catch (e) {
           console.error(e)

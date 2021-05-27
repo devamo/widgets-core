@@ -54,6 +54,7 @@ export type WidgetClassOptions = {
   proxyBaseUrl?: string
   apiBaseUrl?: string
   wsBaseUrl?: string
+  clearSettings?: boolean
 
   extra?: any
 }
