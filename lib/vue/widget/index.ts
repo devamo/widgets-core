@@ -37,6 +37,8 @@ export class VueWidget implements WidgetClassInstance {
   private disposableDecoded: any | null = null
   private clearSettings: boolean
 
+  private initFired = false
+
   constructor(opts: VueWidgetOptions) {
     this.clearSettings = opts.clearSettings !== undefined ? opts.clearSettings : true
 
@@ -87,10 +89,7 @@ export class VueWidget implements WidgetClassInstance {
     return new WebSockets(props)
   }
 
-  createAxios(
-    config: string | AxiosRequestConfig,
-    opts: { auth?: boolean; authHeader?: string; authTokenType?: string } = {}
-  ): SuperAxios {
+  createAxios(config: string | AxiosRequestConfig, opts: { auth?: boolean; authHeader?: string; authTokenType?: string } = {}): SuperAxios {
     opts = Object.assign(
       {
         auth: true,
@@ -148,16 +147,13 @@ export class VueWidget implements WidgetClassInstance {
 
         // пытаемся запросить disposable
         try {
-          const response = await fetch(
-            `/ajax/v2/integrations/${this.amoWidget?.params.oauth_client_uuid}/disposable_token`,
-            {
-              method: 'GET',
-              credentials: 'include',
-              headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-              }
+          const response = await fetch(`/ajax/v2/integrations/${this.amoWidget?.params.oauth_client_uuid}/disposable_token`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest'
             }
-          )
+          })
           const { token } = await response.json()
 
           if (!token) {
@@ -191,57 +187,69 @@ export class VueWidget implements WidgetClassInstance {
     const that = this
 
     const errLog = (action: string, e: any) => {
-      return `[${this.productId}] Ошибка при выполнении ${action}: ${e.message}`
+      console.error(`[${this.productId}] Ошибка при выполнении ${action}: ${e.message}`)
+    }
+
+    const init = async () => {
+      return new Promise(resolve => {
+        if (!this.initFired) {
+          this.initFired = true
+
+          that.init().then(() => resolve(true))
+        } else {
+          resolve(true)
+        }
+      })
     }
 
     return {
-      init: () => true,
+      init: () => {
+        console.log('native:init')
+
+        return true
+      },
       render: function () {
-        const isAdvanced =
-          window.location.pathname.indexOf(
-            '/settings/widgets/' + that.amoWidget?.params.widget_code + '/'
-          ) === 0
+        console.log('native:render')
+
+        const isAdvanced = window.location.pathname.indexOf('/settings/widgets/' + that.amoWidget?.params.widget_code + '/') === 0
 
         if (isAdvanced) {
           if (!that.window.AMOCRM.first_load) {
-            that
-              .init()
+            init()
               .then(() => {
                 try {
-                  that.render().catch((e) => errLog('advanced', e))
+                  that.render().catch(e => errLog('advanced', e))
                 } catch (e) {
                   errLog('advanced', e)
                 }
               })
-              .catch((e) => errLog('init', e))
+              .catch(e => errLog('init', e))
           }
         } else {
-          that
-            .init()
+          init()
             .then(() => {
               try {
-                that.render().catch((e) => errLog('render', e))
+                that.render().catch(e => errLog('render', e))
               } catch (e) {
                 errLog('render', e)
               }
             })
-            .catch((e) => errLog('init', e))
+            .catch(e => errLog('init', e))
         }
 
         return true
       },
       advancedSettings: function () {
         if (that.window.AMOCRM.first_load) {
-          that
-            .init()
+          init()
             .then(() => {
               try {
-                that.render().catch((e) => errLog('render', e))
+                that.render().catch(e => errLog('render', e))
               } catch (e) {
                 errLog('render', e)
               }
             })
-            .catch((e) => errLog('init', e))
+            .catch(e => errLog('init', e))
         }
 
         return true
@@ -263,6 +271,13 @@ export class VueWidget implements WidgetClassInstance {
         }
 
         return true
+      },
+      dpSettings: function () {
+        try {
+          that.dpSettings()
+        } catch (e) {
+          errLog('dpSettings', e)
+        }
       },
       settings(modal: any) {
         try {
@@ -287,7 +302,9 @@ export class VueWidget implements WidgetClassInstance {
         }
 
         try {
-          that.settings(modal)
+          init().then(() => {
+            that.settings(modal)
+          })
         } catch (e) {
           errLog('settings', e)
         }
@@ -295,10 +312,7 @@ export class VueWidget implements WidgetClassInstance {
         return true
       },
       initMenuPage() {
-        const isOurWidgetPage =
-          window.location.pathname.indexOf(
-            `widget_page/${that.amoWidget?.params.widget_code}/main/list`
-          ) === 1
+        const isOurWidgetPage = window.location.pathname.indexOf(`widget_page/${that.amoWidget?.params.widget_code}/main/list`) === 1
 
         if (!isOurWidgetPage) {
           return true
@@ -361,20 +375,13 @@ export class VueWidget implements WidgetClassInstance {
 
   can(alias: string, def = false) {
     if (this._auth === undefined) throw new Error('Авторизация не загружена, вызовите fetchAuth')
-    if (this._access === undefined)
-      throw new Error('Настройки доступа не загружены, вызовите fetchAccess')
+    if (this._access === undefined) throw new Error('Настройки доступа не загружены, вызовите fetchAccess')
 
     const userId = this._auth.accountUser.amoId
     const groupId = this._auth.accountUserGroup.amoId
 
-    const allowGroup =
-      this._access[`group_${groupId}_${alias}`] !== undefined
-        ? this._access[`group_${groupId}_${alias}`]
-        : undefined
-    const allowUser =
-      this._access[`user_${userId}_${alias}`] !== undefined
-        ? this._access[`user_${userId}_${alias}`]
-        : undefined
+    const allowGroup = this._access[`group_${groupId}_${alias}`] !== undefined ? this._access[`group_${groupId}_${alias}`] : undefined
+    const allowUser = this._access[`user_${userId}_${alias}`] !== undefined ? this._access[`user_${userId}_${alias}`] : undefined
 
     return allowGroup || allowUser || def
   }
@@ -475,6 +482,10 @@ export class VueWidget implements WidgetClassInstance {
 
   async searchDataInCard(): Promise<any> {
     console.log('Method "searchDataInCard" not implemented')
+  }
+
+  async dpSettings(): Promise<any> {
+    console.log('Method "dpSettings" not implemented')
   }
 
   async linkCard(): Promise<boolean> {
