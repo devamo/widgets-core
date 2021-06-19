@@ -192,8 +192,8 @@ export class VueWidget implements WidgetClassInstance {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const that = this
 
-    const log = (action: string, type: 'log' | 'error' | 'warn' = 'log', e?: any) => {
-      console[type](`[${this.productId}] ${type} ${action}${e ? ': ' + e.message : ''}`)
+    const errLog = (action: string, e: any) => {
+      console.error(`[${this.productId}] Ошибка при выполнении ${action}: ${e.message}`)
     }
 
     const init = async () => {
@@ -209,14 +209,8 @@ export class VueWidget implements WidgetClassInstance {
     }
 
     return {
-      init: () => {
-        log('native:init')
-
-        return true
-      },
+      init: () => true,
       render: function () {
-        log('native:render')
-
         try {
           const isAdvanced =
             window.location.pathname.indexOf(
@@ -228,58 +222,50 @@ export class VueWidget implements WidgetClassInstance {
               init()
                 .then(() => {
                   try {
-                    that.render().catch((e) => log('advanced', 'error', e))
+                    that.render().catch((e) => errLog('advanced', e))
                   } catch (e) {
-                    log('advanced', 'error', e)
+                    errLog('advanced', e)
                   }
                 })
-                .catch((e) => log('advanced', 'error', e))
+                .catch((e) => errLog('init', e))
             }
           } else {
             init()
               .then(() => {
                 try {
-                  that.render().catch((e) => log('render', 'error', e))
+                  that.render().catch((e) => errLog('render', e))
                 } catch (e) {
-                  log('render', 'error', e)
+                  errLog('render', e)
                 }
               })
-              .catch((e) => log('render', 'error', e))
+              .catch((e) => errLog('init', e))
           }
-        } catch (e) {
-          log('native:render', 'error', e)
-        }
+        } catch (e) {}
 
         return true
       },
       advancedSettings: function () {
-        log('native:advanced')
-
         try {
           if (that.window.AMOCRM.first_load) {
             init()
               .then(() => {
                 try {
-                  that.render().catch((e) => log('native:advanced', 'error', e))
+                  that.render().catch((e) => errLog('render', e))
                 } catch (e) {
-                  log('render', 'error', e)
+                  errLog('render', e)
                 }
               })
-              .catch((e) => log('native:advanced', 'error', e))
+              .catch((e) => errLog('init', e))
           }
-        } catch (e) {
-          log('native:advanced', 'error', e)
-        }
+        } catch (e) {}
 
         return true
       },
       bind_actions: function () {
-        log('native:bind_actions')
-
         try {
           that.bindActions()
         } catch (e) {
-          log('native:bind_actions', 'error', e)
+          errLog('bind_actions', e)
         }
 
         return true
@@ -288,7 +274,7 @@ export class VueWidget implements WidgetClassInstance {
         try {
           that.onSave()
         } catch (e) {
-          log('native:onSave', 'error', e)
+          errLog('onSave', e)
         }
 
         return true
@@ -297,12 +283,12 @@ export class VueWidget implements WidgetClassInstance {
         try {
           that.dpSettings()
         } catch (e) {
-          log('native:dpSettings', 'error', e)
+          errLog('dpSettings', e)
         }
+
+        return true
       },
       settings(modal: any) {
-        log('native:settings')
-
         try {
           if (that.clearSettings) {
             const settingsWrap = modal[0].querySelector('#widget_settings__fields_wrapper')
@@ -320,90 +306,78 @@ export class VueWidget implements WidgetClassInstance {
               settingDescrExp.style.display = 'none'
             }
           }
-
-          init()
-            .then(() => {
-              that.settings(modal)
-            })
-            .catch((e) => log('settings', 'error', e))
         } catch (e) {
-          log('native:settings', 'error', e)
+          console.error(e)
+        }
+
+        try {
+          init().then(() => {
+            that.settings(modal)
+          })
+        } catch (e) {
+          errLog('settings', e)
         }
 
         return true
       },
       initMenuPage() {
-        log('native:initMenuPage')
-
         try {
           const isOurWidgetPage =
             window.location.pathname.indexOf(
               `widget_page/${that.amoWidget?.params.widget_code}/main/list`
             ) === 1
 
-          if (!isOurWidgetPage) {
-            return true
-          } else {
+          if (isOurWidgetPage) {
             try {
-              that.initMenuPage().catch((e) => log('initMenuPage', 'error', e))
+              that.initMenuPage()
             } catch (e) {
-              log('initMenuPage', 'error', e)
+              errLog('initMenuPage', e)
             }
           }
-        } catch (e) {
-          log('native:initMenuPage', 'error', e)
-        }
+        } catch (e) {}
 
         return true
       },
       async loadPreloadedData() {
-        log('native:loadPreloadedData')
-
         let data = []
 
         try {
           data = await that.loadPreloadedData()
         } catch (e) {
-          log('loadPreloadedData', e)
+          errLog('loadPreloadedData', e)
         }
 
         return data
       },
       async loadElements() {
-        log('native:loadElements')
-
         let data = []
 
         try {
           data = await that.loadElements()
         } catch (e) {
-          log('loadElements', e)
+          errLog('loadElements', e)
         }
 
         return data
       },
       async searchDataInCard() {
-        log('native:searchDataInCard')
-
         let data = []
 
         try {
           data = await that.searchDataInCard()
         } catch (e) {
-          log('searchDataInCard', e)
+          errLog('searchDataInCard', e)
         }
 
         return data
       },
       async linkCard() {
-        log('native:linkCard')
-
         let ret = true
 
         try {
           ret = await that.linkCard()
         } catch (e) {
-          log('linkCard', e)
+          errLog('linkCard', e)
         }
 
         return ret

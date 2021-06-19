@@ -33,6 +33,7 @@ export type AmoWidget = {
   init_once: 'N' | 'Y'
   langs: any
   modal?: any
+  get_install_status: () => string
   system: () => {
     amohash: string
     amouser: string
